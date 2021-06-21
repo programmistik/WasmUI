@@ -1,0 +1,111 @@
+﻿@page "/editpost/{postId}"
+
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@using WasmUI.Shared
+@using System.Text.RegularExpressions
+
+
+
+
+@if (editedpost == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <RadzenTemplateForm Data="@editedpost" Submit="@(async(Post args) => { await Submit(args); })">
+        <div class="row">
+            <RadzenFieldset Text="EDIT POST">
+                <RadzenImage Path=@editedpost.Image Style="width:600px; margin-bottom: 10px;" />
+                <div class="row">
+                    <div class="col-md-2 align-items-center d-flex">
+                        <RadzenLabel Text="Title:" />
+                    </div>
+                    <div class="col-md-10 mb-2">
+                        <RadzenTextBox style="width: 100%;" Name="Title" @bind-Value="editedpost.Title" />
+                    </div>
+                </div>
+                @*<div class="row">
+                        <div class="col-md-2 align-items-center d-flex">
+                            <RadzenLabel Text="Location:" />
+                        </div>
+                        <div class="col-md-10 mb-2">
+                            <RadzenTextBox style="width: 100%;" Name="Location" @bind-Value="editedpost.Location" />
+                        </div>
+                    </div>*@
+                <div class="row">
+                    <RadzenHtmlEditor @bind-Value="editedpost.Description" style="height: 350px; margin-bottom: 1rem;">
+
+                        <RadzenHtmlEditorBold />
+                        <RadzenHtmlEditorItalic />
+                        <RadzenHtmlEditorUnderline />
+                        <RadzenHtmlEditorStrikeThrough />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorColor />
+                        <RadzenHtmlEditorBackground />
+                        <RadzenHtmlEditorRemoveFormat />
+                        <RadzenHtmlEditorLink />
+                        <RadzenHtmlEditorUnlink />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorFontName />
+                        <RadzenHtmlEditorFontSize />
+                    </RadzenHtmlEditor>
+                </div>
+                <div>
+                    <div>
+                        <RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Text="Save" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="cancel" style="display: inline-block; margin-left: 10px;" Text="Cancel" Click="@Cancel" />
+                    </div>
+                </div>
+
+            </RadzenFieldset>
+
+        </div>
+
+    </RadzenTemplateForm>
+}
+
+@code{
+
+    [Parameter]
+    public string postId { get; set; }
+
+    Post editedpost;
+
+    protected override async Task OnInitializedAsync()
+    {
+        editedpost = await Http.GetFromJsonAsync<Post>($"Mypost?PostId={postId}");
+    }
+
+
+
+    async Task Submit(Post arg)
+    {
+        editedpost.Hashtags = new List<string>();
+
+        // look for hashtags in desc
+        if (!String.IsNullOrEmpty(editedpost.Description))
+        {
+            var regex = new Regex(@"(?<=#)\w+");
+            var matches = regex.Matches(editedpost.Description);
+
+            foreach (Match m in matches)
+            {
+                editedpost.Hashtags.Add(m.Value);
+            }
+        }
+
+        await Http.PutAsJsonAsync<Post>("Post", editedpost);
+        NavigationManager.NavigateTo("/profile");
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("/profile");
+    }
+
+
+
+}
+

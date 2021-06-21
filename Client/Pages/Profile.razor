@@ -1,0 +1,396 @@
+﻿@page "/profile"
+
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
+
+@inject DialogService DialogService
+@implements IDisposable
+
+
+@using WasmUI.Shared
+
+
+@if (prof == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <RadzenTabs Change=@OnChange style="height: 880px" RenderMode="TabRenderMode.Client">
+        <Tabs>
+            <RadzenTabsItem Text="My profile">
+
+                <div class="row">
+                    <div class="column m-3">
+                        <img src=@Avatara alt="" width="200" height="200" class="rounded-circle" />
+                    </div>
+                    <div class="column m-3">
+                        <div class="ml-4">
+                            <h5 class="font-weight-bold"> Name: @prof.Name</h5>
+                            @if (String.IsNullOrEmpty(prof.From) == false)
+                            {
+                                <h5><i class="fas fa-map-marker-alt"></i> @prof.From</h5>
+                            }
+
+                            <h5><i class="far fa-envelope"></i> @prof.AppUserId</h5>
+
+                            @if (String.IsNullOrEmpty(prof.Whatsapp) == false)
+                            {
+                                <h5><i class="fab fa-whatsapp"></i> @prof.Whatsapp</h5>
+                            }
+                            @if (String.IsNullOrEmpty(prof.Skype) == false)
+                            {
+                                <h5><i class="fab fa-skype"></i> @prof.Skype</h5>
+                            }
+                        </div>
+
+                    </div>
+
+                </div>
+                <RadzenButton style="margin: 0 1rem 1rem 0" Click=@(args => OnClick()) Text="Change profile" ButtonStyle="ButtonStyle.Secondary" />
+
+                <h3>My posts</h3>
+                <hr />
+
+                <div class="row">
+                    @foreach (var item in posts)
+                    {
+                        <div class="col-12 col-md-3 mb-2">
+                            <div class="card">
+                                <RadzenImage Path=@item.Image
+                                             class="card-img-top entry-title"
+                                             @onclick="() => ClickMe(item.UniqueId)"
+                                             Style="cursor: pointer;image-orientation: from-image;object-fit: cover; height:250px">
+                                </RadzenImage>
+
+                                <div class="card-body">
+
+                                    <h5 class="card-title">@item.Title</h5>
+
+                                    <p class="card-text text-muted"> 👁 @item.ViewsProfileId.Count() ❤ @item.LikesProfileId.Count()</p>
+                                    <div class="mt-3">
+                                        <RadzenButton style="width: 70px; padding: 0" Click=@(args => OnClickView(item.UniqueId)) Text="View" ButtonStyle="ButtonStyle.Secondary" />
+                                        <RadzenButton style="width: 70px; padding: 0" Click=@(args => OnClickEdit(item.UniqueId)) Text="Edit" ButtonStyle="ButtonStyle.Secondary" />
+                                        <RadzenButton style="width: 70px; padding: 0" Click=@(args => OnClickDelAsync(item.Id, item.Title)) Text="Del" ButtonStyle="ButtonStyle.Danger" />
+
+                                        @*<RadzenButton style="width: 70px; padding: 0" Text="Del" ButtonStyle="ButtonStyle.Danger"
+                                            Click=@(args => DialogService.Confirm("Are you sure?", $"Delete {item.Title}", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" })) />*@
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="My friends">
+                <RadzenSelectBar @bind-Value=@singleValue TValue="bool" Change=@(args => OnChange2(args, "SelectBar with single selection"))>
+                    <Items>
+                        <RadzenSelectBarItem Text="Friends" Value="true" />
+                        <RadzenSelectBarItem Text="Blocked" Value="false" />
+                    </Items>
+                </RadzenSelectBar>
+                @if (showFriends)
+                {
+                    <table class="table table-hover mt-2">
+                        <tbody>
+                            @foreach (var item in friends)
+                            {
+                                <tr id="@item.AppUserId">
+                                    <td>
+                                        <img src=@item.Avatara height="40" class="rounded-circle" />
+                                        <RadzenLink Path=@($"/user/{item.AppUserId}") Text="@item.Name" Style="text-decoration: none;" />
+
+                                    </td>
+                                    <td>
+                                        <RadzenButton style="width: 70px; padding: 0" Click=@(args => OnClickBlockFriend(item.AppUserId)) Text="Block" ButtonStyle="ButtonStyle.Warning" />
+                                        <RadzenButton style="width: 70px; padding: 0" Click=@(args => OnClickDelFriend(item.AppUserId)) Text="Delete" ButtonStyle="ButtonStyle.Danger" />
+                                    </td>
+
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else if (showFriends == false)
+                {
+                    <table class="table table-hover mt-2">
+                        <tbody>
+                            @foreach (var item in blocked)
+                            {
+                                <tr>
+                                    <td>
+                                        <img src=@item.Avatara height="40" class="rounded-circle" />
+                                        <RadzenLink Path=@($"/user/{item.AppUserId}") Text="@item.Name" Style="text-decoration: none;" />
+                                    </td>
+                                    <td>
+                                        <RadzenButton style="width: 70px; padding: 0" Click=@(args => OnClickUnBlock(item.AppUserId)) Text="Unblock" ButtonStyle="ButtonStyle.Success" />
+                                    </td>
+
+                                </tr>
+
+                            }
+                            <tr id="newadd">
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!--<div class="mt-1">
+                    <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="5" AllowPaging="true" AllowSorting="true"
+                                    Data="@blocked" TItem="ProfileClass" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or">
+                        <Columns>-->
+                    @*<RadzenDataGridColumn TItem="ProfileClass" Property="EmployeeID" Filterable="false" Title="ID" Frozen="true" Width="50px" TextAlign="TextAlign.Center" />*@
+                    <!--<RadzenDataGridColumn TItem="ProfileClass" Title="Photo" Sortable="false" Filterable="false" Width="100px">
+                                    <Template Context="data">
+                                        <RadzenImage Path="@data.Avatara" style="width: 32px; height: 32px; border-radius: 50%;" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="ProfileClass" Property="Name" Title="Name" />
+
+                            </Columns>
+                        </RadzenDataGrid>
+                    </div>-->
+                }
+
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="❤ Licked posts">
+                @if (liked == null)
+                {
+                    <p><em>Loading...</em></p>
+                }
+                else
+                {
+                    <div class="row">
+                        @foreach (var item in liked)
+                        {
+                            <div class="col-12 col-md-3 mb-2">
+                                <div class="card">
+                                    <RadzenImage Path=@item.Post.Image
+                                                 class="card-img-top entry-title"
+                                                 @onclick="() => ClickMe(item.Post.UniqueId)"
+                                                 Style="cursor: pointer;image-orientation: from-image;object-fit: cover; height:250px">
+                                    </RadzenImage>
+
+                                    <div class="card-body">
+
+                                        <h5 class="card-title">@item.Post.Title</h5>
+
+                                        <p class="card-text text-muted"> 👁 @item.Post.ViewsProfileId.Count() ❤ @item.Post.LikesProfileId.Count()</p>
+                                        @*<div class="mt-3">
+                                                <RadzenButton style="width: 70px; padding: 0" Click=@(args => OnClickView(item.Post.UniqueId)) Text="View" ButtonStyle="ButtonStyle.Secondary" />
+                                            </div>*@
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+}
+
+@code {
+
+    ProfileClass prof;
+    List<Post> posts;
+    List<ProfileClass> friends = new List<ProfileClass>();
+    List<ProfileClass> blocked = new List<ProfileClass>();
+    List<LikedPostFull> liked = new List<LikedPostFull>();
+
+    bool singleValue = true;
+    string Avatara = "";
+
+    bool changed = false;
+    bool showFriends = true;
+
+    string me;
+    string idToDelete;
+
+
+    void OnClick()
+    {
+        NavigationManager.NavigateTo("/changeprofile");
+    }
+
+    void OnClickView(string id)
+    {
+        NavigationManager.NavigateTo($"/singlepost/{id}");
+    }
+
+    void OnClickEdit(string id)
+    {
+        NavigationManager.NavigateTo($"/editpost/{id}");
+    }
+
+    async Task OnClickDelAsync(string id, string Title)
+    {
+        idToDelete = id;
+        var result = await DialogService.OpenAsync($"Delete {Title}", ds =>
+    @<div>
+        <p Style="margin-bottom: 1rem"> Are you sure?</p>
+        <div class="row">
+            <div class="col-md-12">
+
+                <RadzenButton Text="Ok" Click="() => ds.Close(true)" Style="margin-bottom: 10px; width: 150px" />
+                <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Style="margin-bottom: 10px; width: 150px" />
+
+            </div>
+        </div>
+    </div>);
+        NavigationManager.NavigateTo("/profile");
+    }
+    void ClickMe(string id)
+    {
+        NavigationManager.NavigateTo($"/singlepost/{id}");
+    }
+
+    async Task OnChange(int index)
+    {
+        if (!changed)
+        {
+            friends = new List<ProfileClass>();
+
+            foreach (var item in prof.Friends)
+            {
+                if (item != null)
+                {
+                    var friendProfile = await Http.GetFromJsonAsync<ProfileClass>($"Profile?AppUserId={item}");
+                    if (friendProfile.Avatara == null)
+                        friendProfile.Avatara = $"/uploads/profiles/default.jpg";
+
+                    friends.Add(friendProfile);
+                }
+            }
+
+            blocked = new List<ProfileClass>();
+
+            foreach (var item in prof.BlockedUsers)
+            {
+                if (item != null)
+                {
+                    var blockedProfile = await Http.GetFromJsonAsync<ProfileClass>($"Profile?AppUserId={item}");
+                    if (blockedProfile.Avatara == null)
+                        blockedProfile.Avatara = $"/uploads/profiles/default.jpg";
+                    blocked.Add(blockedProfile);
+                }
+            }
+
+            liked = new List<LikedPostFull>();
+
+            foreach (var item in prof.LikedPosts)
+            {
+                if (item != null)
+                {
+                    var likedPost = await Http.GetFromJsonAsync<Post>($"MyPost?PostId={item.PostId}");
+                    liked.Add(new LikedPostFull() { Date = item.Date, Post = likedPost });
+                }
+            }
+
+            var orderedLikes = liked.OrderBy(x => x.Date).ToList();
+
+            changed = true;
+        }
+    }
+
+    // DIALOG
+
+
+    public void Dispose()
+    {
+        // The DialogService is a singleton so it is advisable to unsubscribe.
+        DialogService.OnOpen -= Open;
+        DialogService.OnClose -= Close;
+    }
+
+    void Open(string title, Type type, Dictionary<string, object> parameters, DialogOptions options)
+    {
+    }
+
+    void Close(dynamic result)
+    {
+        if (result == true)
+        {
+            CallDelAsync();
+        }
+
+    }
+
+    async Task CallDelAsync()
+    {
+        if (!string.IsNullOrEmpty(idToDelete))
+        {
+            await Http.DeleteAsync($"Post?PostId={idToDelete}");
+            posts.Remove(posts.FirstOrDefault(x => x.Id == idToDelete));
+            this.StateHasChanged();
+        }
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        me = authstate.User.Identity.Name;
+
+        DialogService.OnOpen += Open;
+        DialogService.OnClose += Close;
+
+        prof = await Http.GetFromJsonAsync<ProfileClass>($"Profile?AppUserId={me}");
+        posts = await Http.GetFromJsonAsync<List<Post>>($"Post?AppUserId={me}");
+
+        if (prof.Avatara == null)
+            Avatara = $"uploads/profiles/default.jpg";
+        else
+            Avatara = prof.Avatara;
+
+
+    }
+
+    void OnChange2(object value, string name)
+    {
+        if ((bool)value == true)
+        {
+
+            showFriends = true;
+
+        }
+        else
+        {
+            showFriends = false;
+        }
+    }
+
+    async Task OnClickBlockFriend(string AppUserId)
+    {
+        var usr = friends.Where(x => x.AppUserId.Equals(AppUserId)).FirstOrDefault();
+        friends.Remove(usr);
+        blocked.Add(usr);
+
+        prof.BlockedUsers.Add(AppUserId);
+        prof.Friends.Remove(AppUserId);
+
+        await Http.PutAsJsonAsync<ProfileClass>("Profile", prof);
+
+    }
+    async Task OnClickDelFriend(string AppUserId)
+    {
+        var usr = friends.Where(x => x.AppUserId.Equals(AppUserId)).FirstOrDefault();
+        friends.Remove(usr);
+
+        prof.Friends.Remove(AppUserId);
+
+        await Http.PutAsJsonAsync<ProfileClass>("Profile", prof);
+    }
+    async Task OnClickUnBlock(string AppUserId)
+    {
+        var usr = blocked.Where(x => x.AppUserId.Equals(AppUserId)).FirstOrDefault();
+        blocked.Remove(usr);
+
+        prof.BlockedUsers.Remove(AppUserId);
+
+        await Http.PutAsJsonAsync<ProfileClass>("Profile", prof);
+    }
+
+}

@@ -1,0 +1,74 @@
+﻿@page "/news"
+
+
+
+<h3>News</h3>
+<hr />
+<RadzenCheckBox @bind-Value=@checkBox1Value TValue="bool" Change=@(args => OnChange(args, "CheckBox1 CheckBox")) />
+<RadzenLabel Text="Show news only from my friends" Component="CheckBox1" Style="margin-left: 5px; margin-bottom:5px;" />
+
+<div class="row">
+    @foreach (var item in posts)
+    {
+        <div class="col-12 col-md-3">
+            <div class="card">
+                <RadzenImage Path=@item.Image
+                             class="card-img-top entry-title"
+                             @onclick="() => ClickMe(item.UniqueId)"
+                             Style="cursor: pointer;image-orientation: from-image;object-fit: cover; height:250px">
+                </RadzenImage>
+
+                <div class="card-body">
+                    <h5 class="card-title">@item.Title</h5>
+                    <p class="card-text text-muted"> 👁 @item.ViewsProfileId.Count() ❤ @item.LikesProfileId.Count()</p>
+
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+
+    bool checkBox1Value;
+    List<Post> posts = new List<Post>();
+    List<Post> allposts;
+    string me;
+    ProfileClass myProfile;
+
+    void ClickMe(string id)
+    {
+        NavigationManager.NavigateTo($"/singlepost/{id}");
+    }
+
+    void OnChange(bool? value, string name)
+    {
+        if (checkBox1Value)
+        {
+            posts = posts.Where(x => myProfile.Friends.Any(f => f.Equals(x.ProfileId))).ToList();
+        }
+        else
+        {
+            posts = allposts;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        me = authstate.User.Identity.Name;
+
+        myProfile = await Http.GetFromJsonAsync<ProfileClass>($"Profile?AppUserId={me}");
+        allposts = await Http.GetFromJsonAsync<List<Post>>("Post");
+
+        allposts = allposts.Where(x => x.ProfileId.Equals(me) == false).ToList();
+        allposts = allposts.Where(x => x.ViewsProfileId.Any(z => z.Equals(me)) == false).ToList();
+        allposts = allposts.Where(x => myProfile.BlockedUsers.Any(z => z.Equals(x.ProfileId)) == false).ToList();
+
+        allposts = allposts.OrderByDescending(x => x.Date).ToList();
+
+        posts = new List<Post>(allposts);
+
+    }
+
+}

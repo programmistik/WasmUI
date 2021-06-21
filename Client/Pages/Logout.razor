@@ -1,0 +1,18 @@
+﻿@page "/logout"
+<h3>Logout</h3>
+@inject NavigationManager nav
+@using WasmUI.Client.Services
+
+
+@code {
+
+    [Inject]
+    public IAuthenticationService AuthenticationService { get; set; }
+
+    protected override async void OnInitialized()
+    {
+        await AuthenticationService.Logout();
+        nav.NavigateTo("/");
+    }
+
+}

@@ -1,0 +1,120 @@
+﻿@page "/registration"
+
+@inject HttpClient Http
+@using WasmUI.Shared.DTO
+@using WasmUI.Client.Services
+@inject NavigationManager nav
+@using System.Text.Json
+
+
+<RadzenCard>
+    <RadzenTemplateForm TItem="Model" Data=@model Submit=@OnSubmit>
+        <h3>Registration</h3>
+        @if (ShowAuthError)
+        {
+            <div class="alert alert-danger" role="alert">
+                <p>@Error</p>
+            </div>
+        }
+        <div class="row">
+            <div class="col-md-2 align-items-center d-flex">
+                <RadzenLabel Text="E-mail:" />
+            </div>
+            <div class="col-md-10 mb-4">
+                <RadzenTextBox style="width: 100%;" Name="Email" @bind-Value="@model.Email" />
+                <div>
+                    <RadzenRequiredValidator Component="Email" Text="Email is required" Popup=@popup Style="position: absolute" />
+                    <RadzenEmailValidator Component="Email" Text="Provide a valid email address" Popup=@popup Style="position: absolute" />
+                </div>
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-md-2 align-items-center d-flex">
+                <RadzenLabel Text="Password:" />
+            </div>
+            <div class="col-md-10 mb-4">
+                <RadzenPassword style="width: 100%;" Name="Password" @bind-Value="@model.Password" />
+                <div>
+                    <RadzenRequiredValidator Component="Password" Text="Enter password" Popup="@popup" Style="position: absolute" />
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2 align-items-center d-flex">
+                <RadzenLabel Text="Confirm password:" />
+            </div>
+            <div class="col-md-10 mb-4">
+                <RadzenPassword style="width: 100%;" Name="RepeatPassword" @bind-Value="@model.RepeatPassword" />
+                <div>
+                    <RadzenRequiredValidator Component="RepeatPassword" Text="Repeat your password" Popup=@popup Style="position: absolute" />
+                    <RadzenCompareValidator Visible=@(!string.IsNullOrEmpty(model.RepeatPassword)) Value=@model.Password Component="RepeatPassword" Text="Passwords should be the same" Popup=@popup Style="position: absolute" />
+                </div>
+
+            </div>
+        </div>
+        <div class="row mt-2">
+            @*<RadzenButton ButtonStyle="ButtonStyle.Secondary" Click=@(args => OnClick()) Text="Login" Style="margin-bottom: 20px; width: 150px" />*@
+            <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Secondary" Text="Register"></RadzenButton>
+        </div>
+
+
+    </RadzenTemplateForm>
+</RadzenCard>
+
+
+@code {
+
+    class Model
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public double Value { get; set; }
+        public string RepeatPassword { get; set; }
+    }
+
+    bool popup;
+    double targetValue = 1;
+
+    CompareOperator compareOperator = CompareOperator.Equal;
+
+    Model model = new Model();
+
+    bool ShowAuthError = false;
+    string Error;
+
+    async Task OnSubmit()
+    {
+        var usr = new UserForRegistrationDto()
+        {
+            Email = model.Email,
+            Password = model.Password,
+            ConfirmPassword = model.RepeatPassword
+        };
+        var resp = await Http.PostAsJsonAsync<UserForRegistrationDto>("Auth", usr);
+        var Content = await resp.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<RegistrationResponseDto>(Content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        if (!result.IsSuccessfulRegistration)
+        {
+            ShowAuthError = true;
+            if (result.Errors.Count() > 0)
+                Error = result.Errors.FirstOrDefault();
+            else
+                Error = "Registration failed!";
+        }
+        else
+        {
+            await Http.PostAsJsonAsync<ProfileClass>("Profile", new ProfileClass
+            {
+                AppUserId = model.Email,
+                BlockedUsers = new List<string>(),
+                Friends = new List<string>(),
+                LikedPosts = new List<LikedPost>(),
+                Name = model.Email
+            });
+            nav.NavigateTo("/");
+        }
+    }
+
+}

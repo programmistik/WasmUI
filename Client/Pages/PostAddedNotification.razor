@@ -1,0 +1,20 @@
+﻿@page "/postadded/{UniqueId}"
+
+@inject NavigationManager NavigationManager
+
+
+<h3>Uploaded</h3>
+
+<RadzenButton Click=@(args => OnClickView(UniqueId)) Text="View my new post" ButtonStyle="ButtonStyle.Secondary" />
+
+@code {
+
+    [Parameter]
+    public string UniqueId { get; set; }
+
+    void OnClickView(string id)
+    {
+        NavigationManager.NavigateTo($"/singlepost/{id}");
+    }
+
+}

@@ -1,0 +1,145 @@
+﻿@page "/addnewpost"
+
+@using WasmUI.Shared
+@using System.Text.RegularExpressions
+
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
+
+@if (newpost == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <RadzenTemplateForm Data="@newpost" Submit="@(async(Post args) => { await Submit(args); })">
+        <div class="row">
+            <RadzenFieldset Text="NEW POST">
+                <div class="row">
+                    <div class="col-md-2 align-items-center d-flex">
+                        <RadzenLabel Text="Image:" />
+                    </div>
+                    <div class="col-md-10 mb-2">
+
+                        <RadzenUpload @ref="_UploadControl" Multiple="false" Accept="image/*" Auto="false"
+                                      Url=@($"upload/{customParameter}") />
+                        @*<RadzenFileInput @bind-Value="newpost.Image"
+
+                            TValue="string" />*@
+
+
+                        @*<RadzenUpload Multiple="true" Accept="image/*" Url=@($"upload/{newpost}") Style="margin-bottom: 20px;"
+                            Progress=@(args => OnProgress(args, "Upload with additional parameter")) />*@
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 align-items-center d-flex">
+                        <RadzenLabel Text="Title:" />
+                    </div>
+                    <div class="col-md-10 mb-2">
+                        <RadzenTextBox style="width: 100%;" Name="Title" @bind-Value="newpost.Title" />
+                    </div>
+                </div>
+                @*<div class="row">
+                    <div class="col-md-2 align-items-center d-flex">
+                        <RadzenLabel Text="Location:" />
+                    </div>
+                    <div class="col-md-10 mb-2">
+                        <RadzenTextBox style="width: 100%;" Name="Location" @bind-Value="newpost.Location" />
+                    </div>
+                </div>*@
+                <div class="row">
+                    <RadzenHtmlEditor @bind-Value="newpost.Description" style="height: 350px; margin-bottom: 1rem;">
+
+                        <RadzenHtmlEditorBold />
+                        <RadzenHtmlEditorItalic />
+                        <RadzenHtmlEditorUnderline />
+                        <RadzenHtmlEditorStrikeThrough />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorColor />
+                        <RadzenHtmlEditorBackground />
+                        <RadzenHtmlEditorRemoveFormat />
+                        <RadzenHtmlEditorLink />
+                        <RadzenHtmlEditorUnlink />
+                        <RadzenHtmlEditorSeparator />
+                        <RadzenHtmlEditorFontName />
+                        <RadzenHtmlEditorFontSize />
+                    </RadzenHtmlEditor>
+                </div>
+                <div>
+                    <div>
+                        <RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Text="Save" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="cancel" style="display: inline-block; margin-left: 10px;" Text="Cancel" Click="@Cancel" />
+                    </div>
+                </div>
+
+            </RadzenFieldset>
+
+        </div>
+
+    </RadzenTemplateForm>
+}
+
+@code{
+    Post newpost;
+    RadzenUpload _UploadControl;
+
+    int id = 2;
+    string customParameter = Guid.NewGuid().ToString();
+    string me;
+
+    protected override async Task OnInitializedAsync()
+    {
+        newpost = new Post();
+
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        me = authstate.User.Identity.Name;
+
+
+        newpost.Date = DateTime.Now;
+        newpost.ProfileId = me; // "programmistik@yahoo.com";
+        newpost.LikesProfileId = new List<string>();
+        newpost.ViewsProfileId = new List<string>();
+    }
+
+
+    async Task Submit(Post arg)
+    {
+        arg.Date = DateTime.Now;
+        arg.ProfileId = me;
+        arg.LikesProfileId = new List<string>();
+        arg.ViewsProfileId = new List<string>();
+        arg.Hashtags = new List<string>();
+        arg.UniqueId = customParameter;
+
+        // look for hashtags in desc
+        if (!String.IsNullOrEmpty(arg.Description))
+        {
+            var regex = new Regex(@"(?<=#)\w+");
+            var matches = regex.Matches(arg.Description);
+
+            foreach (Match m in matches)
+            {
+                arg.Hashtags.Add(m.Value);
+            }
+        }
+
+        await Http.PostAsJsonAsync<Post>("Post", arg);
+
+        var f = _UploadControl.Upload();
+
+        NavigationManager.NavigateTo($"/postadded/{customParameter}");
+
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+
+
+}
+

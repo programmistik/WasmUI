@@ -1,0 +1,138 @@
+﻿@page "/"
+
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
+
+@using WasmUI.Shared
+
+
+<link href="css/cardStyle.css" rel="stylesheet" />
+<AuthorizeView>
+    <Authorized>
+        Hello, @context.User.Identity.Name!
+        <a href="Logout">Log out</a>
+
+        @if (PostProf == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var item in PostProf)
+                {
+                    <div class="col-sm-4">
+                        <div class="tr-section border-card" style="height: 23em;">
+                            <div class="tr-post">
+                                <div class="entry-header">
+                                    <div class="entry-thumbnail">
+
+                                        <RadzenImage Path=@item.post.Image
+                                                     class="img-fluid"
+                                                     @onclick="() => ClickMe(item.post.UniqueId)"
+                                                     Style="cursor: pointer !important;image-orientation: from-image;object-fit: cover">
+                                        </RadzenImage>
+
+
+                                    </div><!-- /entry-thumbnail -->
+                                </div><!-- /entry-header -->
+                                <div class="post-content">
+                                    <div class="author-post">
+                                        <RadzenImage Path=@item.profile.Avatara
+                                                     class="img-fluid rounded-circle"
+                                                     @onclick="() => ClickAutor(item.profile.AppUserId)"
+                                                     Style="cursor: pointer">
+                                        </RadzenImage>
+
+                                    </div><!-- /author -->
+                                    <div class="entry-meta">
+                                        <ul>
+                                            <li><RadzenLink Path=@($"/user/{item.profile.AppUserId}") Text="@item.profile.Name" /></li>
+                                            <li>@item.post.Date.ToShortDateString()</li>
+                                        </ul>
+                                    </div><!-- /.entry-meta -->
+                                    <h2 class="entry-title">
+                                        <a>@item.post.Title</a>
+                                    </h2>
+
+                                    <div class="read-more">
+                                        <div class="feed pull-left">
+                                            <ul>
+                                                <li><i class="fas fa-heart"></i> @item.post.LikesProfileId.Count()</li>&nbsp;
+                                                <li><i class="fas fa-eye"></i> @item.post.ViewsProfileId.Count()</li>
+                                            </ul>
+                                        </div><!-- /feed -->
+                                        <div class="continue-reading pull-right">
+                                            <RadzenLink Path=@($"/singlepost/{item.post.UniqueId}") Text="Show more >" Style="text-decoration: none;" />
+                                        </div><!-- /continue-reading -->
+                                    </div><!-- /read-more -->
+                                </div><!-- /.post-content -->
+                            </div><!-- /.tr-post -->
+                        </div><!-- /.tr-post -->
+                    </div><!-- /col-sm-4 -->
+
+                }
+            </div>
+        }
+
+    </Authorized>
+    <NotAuthorized>
+        <Login></Login>
+
+    </NotAuthorized>
+</AuthorizeView>
+
+
+
+
+@code{
+    List<PostProfile> PostProf;
+    string me;
+
+    class PostProfile
+    {
+        public Post post { get; set; }
+        public ProfileClass profile { get; set; }
+    }
+
+    void ClickMe(string id)
+    {
+        NavigationManager.NavigateTo($"/singlepost/{id}");
+    }
+    void ClickAutor(string AppUserId)
+    {
+        NavigationManager.NavigateTo($"/user/{AppUserId}");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        me = authstate.User.Identity.Name;
+
+        var posts = await Http.GetFromJsonAsync<List<Post>>("Post");
+        PostProf = new List<PostProfile>();
+
+        foreach (var item in posts)
+        {
+            var prof = await Http.GetFromJsonAsync<ProfileClass>($"Profile?AppUserId={item.ProfileId}");
+
+            if (prof.Avatara == null)
+                prof.Avatara = $"/uploads/profiles/default.jpg";
+
+            if (String.IsNullOrEmpty(prof.Name))
+                prof.Name = prof.AppUserId;
+
+            PostProf.Add(new PostProfile
+            {
+                post = item,
+                profile = prof
+            });
+        }
+        // sort post wich I didn see by most liked
+        PostProf = PostProf.OrderByDescending(x => x.post.LikesProfileId.Count).ToList();
+    }
+
+
+}

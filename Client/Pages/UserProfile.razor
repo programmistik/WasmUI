@@ -1,0 +1,195 @@
+﻿@page "/user/{AppUserId}"
+
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
+
+@using WasmUI.Shared
+
+@if (profile == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+
+    <div class="row">
+        <div class="column m-3">
+            <img src=@Avatara alt="" width="200" height="200" class="rounded-circle" />
+        </div>
+        <div class="column m-3">
+            <div class="ml-4">
+                <h5 class="font-weight-bold"> Name: @profile.Name</h5>
+                @if (String.IsNullOrEmpty(profile.From) == false)
+                {
+                    <h5><i class="fas fa-map-marker-alt"></i> @profile.From</h5>
+                }
+
+                <h5><i class="far fa-envelope"></i> @profile.AppUserId</h5>
+
+                @if (String.IsNullOrEmpty(profile.Whatsapp) == false)
+                {
+                    <h5><i class="fab fa-whatsapp"></i> @profile.Whatsapp</h5>
+                }
+                @if (String.IsNullOrEmpty(profile.Skype) == false)
+                {
+                    <h5><i class="fab fa-skype"></i> @profile.Skype</h5>
+                }
+            </div>
+
+        </div>
+
+    </div>
+    @if (!profile.AppUserId.Equals(me.AppUserId))
+    {
+        if (IsFriend)
+        {
+            <RadzenButton style="margin: 0 1rem 1rem 0" Click=@(args => Friendship()) Text="Delete from friends" ButtonStyle="ButtonStyle.Danger" />
+        }
+        else
+        {
+            if (IsBlocked)
+            {
+                <RadzenButton style="margin: 0 1rem 1rem 0" Click=@(args => Block()) Text="Unblock" ButtonStyle="ButtonStyle.Primary" />
+            }
+            else
+            {
+                <RadzenButton style="margin: 0 1rem 1rem 0" Click=@(args => Friendship()) Text="Add to friends" ButtonStyle="ButtonStyle.Success" />
+                <RadzenButton style="margin: 0 1rem 1rem 0" Click=@(args => Block()) Text="Block" ButtonStyle="ButtonStyle.Warning" />
+            }
+        }
+    }
+
+
+    <h3>Posts</h3>
+    <hr />
+
+    <div class="row">
+        @foreach (var item in posts)
+        {
+            <div class="col-12 col-md-3">
+                <div class="card">
+                    <RadzenImage Path=@item.Image
+                                 class="card-img-top entry-title"
+                                 @onclick="() => ClickMe(item.UniqueId)"
+                                 Style="cursor: pointer;image-orientation: from-image;object-fit: cover; height:250px">
+                    </RadzenImage>
+                    @*<img src="uploads/posts/@item.Image" class="card-img-top entry-title" alt="Title" style=" image-orientation:from-image; object-fit: cover" height="250">*@
+
+                    <div class="card-body">
+
+                        <h5 class="card-title">@item.Title</h5>
+
+                        <p class="card-text text-muted"> 👁 @item.ViewsProfileId.Count() ❤ @item.LikesProfileId.Count()</p>
+
+                        @*<RadzenLink Path=@($"/singlepost/{item.UniqueId}") class="continue-reading pull-right" Text="Show more >" Style="text-decoration: none;" />*@
+
+                        @*<RadzenButton style="width: 70px; padding: 0" Click=@(args => OnClickView(item.Id)) Text="View" ButtonStyle="ButtonStyle.Secondary" />*@
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+@code {
+    [Parameter]
+    public string AppUserId { get; set; }
+
+    ProfileClass profile;
+    List<Post> posts;
+    string Avatara;
+
+    bool IsFriend;
+    bool IsBlocked;
+
+
+    ProfileClass me;
+    string myAppUserId;
+
+    void ClickMe(string id)
+    {
+        NavigationManager.NavigateTo($"/singlepost/{id}");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        myAppUserId = authstate.User.Identity.Name;
+
+        profile = await Http.GetFromJsonAsync<ProfileClass>($"Profile?AppUserId={AppUserId}");
+        posts = await Http.GetFromJsonAsync<List<Post>>($"Post?AppUserId={AppUserId}");
+
+        posts = posts.OrderByDescending(x => x.Date).ToList();
+
+        if (profile.Avatara == null)
+            Avatara = $"/uploads/profiles/default.jpg";
+        else
+            Avatara = profile.Avatara;
+
+        me = await Http.GetFromJsonAsync<ProfileClass>($"Profile?AppUserId={myAppUserId}");
+
+        if (me.BlockedUsers?.Where(x => x == AppUserId).Count() > 0)
+        {
+            IsBlocked = true;
+        }
+        else
+        {
+            IsBlocked = false;
+
+            if (me.Friends?.Where(x => x == AppUserId).Count() > 0)
+            {
+                IsFriend = true;
+            }
+            else
+            {
+                IsFriend = false;
+            }
+        }
+
+
+    }
+
+    void OnClickView(string id)
+    {
+        NavigationManager.NavigateTo($"/singlepost/{id}");
+    }
+
+    async Task Friendship()
+    {
+        if (me != null)
+        {
+            if (IsFriend)
+            {
+                me.Friends.Remove(AppUserId);
+                IsFriend = false;
+            }
+            else
+            {
+                me.Friends.Add(AppUserId);
+                IsFriend = true;
+            }
+            await Http.PutAsJsonAsync<ProfileClass>("Profile", me);
+        }
+
+    }
+    async Task Block()
+    {
+        if (me != null)
+        {
+            if (IsBlocked)
+            {
+                me.BlockedUsers.Remove(AppUserId);
+                IsBlocked = false;
+                IsFriend = false;
+            }
+            else
+            {
+                me.BlockedUsers.Add(AppUserId);
+                IsBlocked = true;
+            }
+            await Http.PutAsJsonAsync<ProfileClass>("Profile", me);
+
+        }
+    }
+}

@@ -1,0 +1,73 @@
+﻿@page "/login"
+
+@inject HttpClient Http
+@using WasmUI.Shared.DTO
+@using WasmUI.Client.Services
+@inject NavigationManager nav
+@using System.Text.Json
+
+<RadzenCard>
+    <h3>Login</h3>
+    @if (ShowAuthError)
+    {
+        <div class="alert alert-danger" role="alert">
+            <p>Login failed!</p>
+        </div>
+    }
+    <div class="row">
+        <div class="col-md-1 align-items-center d-flex">
+            <RadzenLabel Text="E-mail:" />
+        </div>
+        <div class="col-md-11 mb-2">
+            <RadzenTextBox style="width: 100%;" Name="Mail" @bind-Value="@mail" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-1 align-items-center d-flex">
+            <RadzenLabel Text="Password:" />
+        </div>
+        <div class="col-md-11 mb-2">
+            <RadzenPassword style="width: 100%;" Name="Pass" @bind-Value="@pass" />
+        </div>
+    </div>
+    <div class="row">
+        <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click=@(args => OnClick()) Text="Login" Style="margin-bottom: 20px; width: 150px" />
+    </div>
+    <div class="row">
+        <a href="Registration">Register </a> &nbsp; if you don't have an account yet.
+    </div>
+
+</RadzenCard>
+@code {
+    string mail;
+    string pass;
+    bool ShowAuthError = false;
+
+    [Inject]
+    public IAuthenticationService AuthenticationService { get; set; }
+
+
+
+    async Task OnClick()
+    {
+        var usr2 = new UserForAuthenticationDto()
+        {
+            Email = mail,
+            Password = pass
+        };
+        var res = await Http.PostAsJsonAsync<UserForAuthenticationDto>("Login", usr2);
+        var authContent = await res.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<AuthResponseDto>(authContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        var ress = await AuthenticationService.Login(result, usr2);
+
+        if (!result.IsAuthSuccessful)
+        {
+            ShowAuthError = true;
+        }
+        else
+        {
+            nav.NavigateTo("/");
+        }
+    }
+}

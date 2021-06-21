@@ -1,0 +1,161 @@
+﻿@page "/singlepost/{postId}"
+
+@using WasmUI.Shared
+@using System.Text.RegularExpressions
+
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
+
+@if (spost == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <h1>@spost.Title </h1>
+    <hr />
+    <dl class="row">
+        <dd class="col-sm-10">
+            <img src="@ava" height="40" class="rounded-circle" />
+            <RadzenLink Path=@($"user/{prof.AppUserId}") Text=@profname Style="text-decoration: none;" />
+        </dd>
+
+        <dd class="col-sm-10">
+            <i>Date: @spost.Date </i>
+        </dd>
+    </dl>
+    <RadzenImage Path=@($"{spost.Image}") Style="width:600px" />
+
+    @if (!prof.AppUserId.Equals(me))
+    {
+        <div class="m-2">
+            <button @onclick="ToggleLike"
+                    class="btn @( liked == true ? "btn-primary" : "btn-secondary" )">
+                <i class="fas fa-thumbs-up fa-lg"></i>
+            </button>
+        </div>
+    }
+
+
+
+    <div class="mt-1">
+        <h3><b>Description:</b></h3>
+        @((MarkupString)newDesc)
+    </div>
+
+
+    <hr />
+
+    <div id="disqus_thread"></div>
+}
+
+@code {
+    [Parameter]
+    public string postId { get; set; }
+
+    Post spost;
+    ProfileClass prof;
+    ProfileClass myprof;
+    string me;
+
+    string newDesc;
+
+    string ava;
+    string profname;
+
+    bool liked = false;
+
+    void SomeAction(string tag)
+    {
+        NavigationManager.NavigateTo($"/search/{tag}");
+    }
+
+    async Task ToggleLike()
+    {
+        liked = !liked;
+
+        var like = spost.LikesProfileId.Where(x => x.Equals(me)).FirstOrDefault();
+        if (like == null)
+        {
+            spost.LikesProfileId.Add(me);
+            myprof.LikedPosts.Add(new LikedPost { Date = DateTime.Now, PostId = postId });
+        }
+        else
+        {
+            spost.LikesProfileId.Remove(me);
+            var itm = myprof.LikedPosts.Where(p => p.PostId.Equals(postId)).FirstOrDefault();
+            if (itm != null)
+            {
+                myprof.LikedPosts.Remove(itm);
+            }
+        }
+
+        await Http.PutAsJsonAsync<Post>("Post", spost);
+
+        await Http.PutAsJsonAsync<ProfileClass>("Profile", myprof);
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        me = authstate.User.Identity.Name;
+
+        if (postId != null)
+        {
+            spost = await Http.GetFromJsonAsync<Post>($"Mypost?PostId={postId}");
+            prof = await Http.GetFromJsonAsync<ProfileClass>($"Profile?AppUserId={spost.ProfileId}");
+            myprof = await Http.GetFromJsonAsync<ProfileClass>($"Profile?AppUserId={me}");
+
+            if (prof.Avatara == null)
+                ava = $"/uploads/profiles/default.jpg";
+            else
+                ava = prof.Avatara;
+
+            if (String.IsNullOrEmpty(prof.Name))
+                profname = prof.AppUserId;
+            else
+                profname = prof.Name;
+
+            // add view if need
+            if (!spost.ProfileId.Equals(me))
+            {
+                var viewed = spost.ViewsProfileId.Where(x => x.Equals(me)).FirstOrDefault();
+                if (viewed == null)
+                {
+                    spost.ViewsProfileId.Add(me);
+
+                    await Http.PutAsJsonAsync<Post>("Post", spost);
+                }
+
+                var likes = spost.LikesProfileId.Where(x => x.Equals(me)).FirstOrDefault();
+                if (likes == null)
+                    liked = false;
+                else
+                    liked = true;
+            }
+
+            //  add hashtags links
+
+            //look for hashtags in desc
+
+            newDesc = spost.Description;
+
+            foreach (var item in spost.Hashtags)
+            {
+                var tag = "#" + item;
+                // var newstr = @$"<a href="" @onclick=@SomeAction({item}) @onclick:preventDefault> {tag} </a>";
+                //var newstr = $@"<NavLink class=""nav-link"" href=""search/{item}"">{tag}</NavLink>";
+                var newstr = $@"<RadzenLink Path=@(""search /{ item}"") Text={tag} Style=""text-decoration: none; "" />";
+                newDesc = newDesc.Replace(tag, newstr);
+            }
+
+
+        }
+        await JS.InvokeVoidAsync("Disq");
+    }
+
+}
+

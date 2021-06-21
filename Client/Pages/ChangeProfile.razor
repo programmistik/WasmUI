@@ -1,0 +1,122 @@
+﻿@page "/changeprofile"
+
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
+
+@using WasmUI.Shared
+
+
+@if (prof == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <RadzenTemplateForm Data="@prof" Submit="@(async(ProfileClass args) => { await Submit(args); })">
+        <div class="row">
+            <RadzenFieldset Text="CHANGE MY PROFILE">
+                <div class="row">
+                    <div class="col-md-3 align-items-center d-flex">
+                        <RadzenLabel Text="Image:" />
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <RadzenUpload @ref="upload" @bind-Value="prof.Avatara" Multiple="false" Accept="image/*" Auto="false"
+                                      Url=@($"uploadava/{me}") 
+                                      Change=@(args => OnChange(args, "Changed")) />
+                       
+
+                        @*<RadzenUpload Multiple="true" Accept="image/*" Url=@($"upload/{newpost}") Style="margin-bottom: 20px;"
+        Progress=@(args => OnProgress(args, "Upload with additional parameter")) />*@
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 align-items-center d-flex">
+                        <RadzenLabel Text="Name:" />
+                    </div>
+                    <div class="col-md-9 mb-2">
+                        <RadzenTextBox style="width: 100%;" Name="Name" @bind-Value="prof.Name" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 align-items-center d-flex">
+                        <RadzenLabel Text="From:" />
+                    </div>
+                    <div class="col-md-9 mb-2">
+                        <RadzenTextBox style="width: 100%;" Name="From" @bind-Value="prof.From" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 align-items-center d-flex">
+                        <RadzenLabel Text="Whatsapp:" />
+                    </div>
+                    <div class="col-md-9 mb-2">
+                        <RadzenMask Mask="(***) ***-**-**" Pattern="[^0-9]" Placeholder="(000) 000-00-00" Name="Whatsapp" @bind-Value="prof.Whatsapp" style="width: 100%;" />
+                        @*<RadzenTextBox style="width: 100%;" Name="Location" @bind-Value="prof.Whatsapp" />*@
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 align-items-center d-flex">
+                        <RadzenLabel Text="Skype:" />
+                    </div>
+                    <div class="col-md-9 mb-2">
+                        <RadzenTextBox style="width: 100%;" Name="Skype" @bind-Value="prof.Skype" />
+                    </div>
+                </div>
+
+                <div>
+                    <div>
+                        <RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Text="Save" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="cancel" style="display: inline-block; margin-left: 10px;" Text="Cancel" Click="@Cancel" />
+                    </div>
+                </div>
+
+            </RadzenFieldset>
+
+        </div>
+
+    </RadzenTemplateForm>
+}
+
+
+@code {
+
+    ProfileClass prof;
+
+    RadzenUpload upload;
+    string me;
+    bool AvaChenged = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        me = authstate.User.Identity.Name;
+
+        prof = await Http.GetFromJsonAsync<ProfileClass>($"Profile?AppUserId={me}");
+
+    }
+
+    void OnChange(UploadChangeEventArgs args, string name)
+    {
+        AvaChenged = true;
+    }
+
+    async Task Submit(ProfileClass arg)
+    {
+        if (AvaChenged)
+        {
+            var f = upload.Upload();
+        }
+
+        await Http.PutAsJsonAsync<ProfileClass>("Profile", prof);
+
+        NavigationManager.NavigateTo("/profile");
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("/profile");
+    }
+
+}
