@@ -40,10 +40,23 @@ else
 
 
 
-    <div class="mt-1">
-        <h3><b>Description:</b></h3>
-        @((MarkupString)newDesc)
-    </div>
+<div class="mt-1">
+    <h3><b>Description:</b></h3>
+    @foreach (var item in text)
+    {
+        if (item.Type == PartType.Text)
+        {
+            @((MarkupString) item.Text)
+        }
+        else
+        {
+            var txt = item.Text.Replace("#", "");
+            <RadzenLink Path=@($"search/{txt}") Text=@item.Text Style="text-decoration: none;" />
+        }
+    }
+
+
+</div>
 
 
     <hr />
@@ -66,6 +79,14 @@ else
     string profname;
 
     bool liked = false;
+    public enum PartType { Text, HashTags };
+
+    public class DescriptionPart
+    {
+        public PartType Type { get; set; }
+        public string Text { get; set; }
+    }
+    List<DescriptionPart> text = new List<DescriptionPart>();
 
     void SomeAction(string tag)
     {
@@ -143,14 +164,33 @@ else
 
             newDesc = spost.Description;
 
+
+
             foreach (var item in spost.Hashtags)
             {
                 var tag = "#" + item;
-                // var newstr = @$"<a href="" @onclick=@SomeAction({item}) @onclick:preventDefault> {tag} </a>";
-                //var newstr = $@"<NavLink class=""nav-link"" href=""search/{item}"">{tag}</NavLink>";
-                var newstr = $@"<RadzenLink Path=@(""search /{ item}"") Text={tag} Style=""text-decoration: none; "" />";
-                newDesc = newDesc.Replace(tag, newstr);
+
+                var indx = newDesc.IndexOf(tag);
+                if (indx == 0)
+                {
+
+                    text.Add(new DescriptionPart() { Type = PartType.HashTags, Text = tag });
+                    newDesc = newDesc.Replace(tag, "");
+                }
+                else
+                {
+                    var txt = newDesc.Substring(0, indx);
+                    text.Add(new DescriptionPart() { Type = PartType.Text, Text = txt });
+                    text.Add(new DescriptionPart() { Type = PartType.HashTags, Text = tag });
+                    newDesc = newDesc.Replace(txt+tag, "");
+                }
             }
+
+            if (newDesc.Length >0)
+            {
+                text.Add(new DescriptionPart() { Type = PartType.Text, Text = newDesc });
+            }
+
 
 
         }
