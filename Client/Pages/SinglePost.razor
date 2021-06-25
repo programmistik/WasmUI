@@ -65,20 +65,20 @@ else
 }
 
 @code {
-    [Parameter]
-    public string postId { get; set; }
+        [Parameter]
+        public string postId { get; set; }
 
-    Post spost;
-    ProfileClass prof;
-    ProfileClass myprof;
-    string me;
+        Post spost;
+        ProfileClass prof;
+        ProfileClass myprof;
+        string me;
 
-    string newDesc;
+        string newDesc;
 
-    string ava;
-    string profname;
+        string ava;
+        string profname;
 
-    bool liked = false;
+        bool liked = false;
     public enum PartType { Text, HashTags };
 
     public class DescriptionPart
@@ -165,33 +165,36 @@ else
             newDesc = spost.Description;
 
 
-
-            foreach (var item in spost.Hashtags)
+            if (newDesc != null)
             {
-                var tag = "#" + item;
 
-                var indx = newDesc.IndexOf(tag);
-                if (indx == 0)
+                foreach (var item in spost.Hashtags)
                 {
+                    var tag = "#" + item;
 
-                    text.Add(new DescriptionPart() { Type = PartType.HashTags, Text = tag });
-                    newDesc = newDesc.Replace(tag, "");
+                    var indx = newDesc.IndexOf(tag);
+                    if (indx == 0)
+                    {
+
+                        text.Add(new DescriptionPart() { Type = PartType.HashTags, Text = tag });
+                        newDesc = newDesc.Replace(tag, "");
+                    }
+                    else
+                    {
+                        var txt = newDesc.Substring(0, indx);
+                        text.Add(new DescriptionPart() { Type = PartType.Text, Text = txt });
+                        text.Add(new DescriptionPart() { Type = PartType.HashTags, Text = tag });
+                        newDesc = newDesc.Replace(txt + tag, "");
+                    }
                 }
-                else
+
+                if (newDesc.Length > 0)
                 {
-                    var txt = newDesc.Substring(0, indx);
-                    text.Add(new DescriptionPart() { Type = PartType.Text, Text = txt });
-                    text.Add(new DescriptionPart() { Type = PartType.HashTags, Text = tag });
-                    newDesc = newDesc.Replace(txt+tag, "");
+                    text.Add(new DescriptionPart() { Type = PartType.Text, Text = newDesc });
                 }
+
             }
-
-            if (newDesc.Length >0)
-            {
-                text.Add(new DescriptionPart() { Type = PartType.Text, Text = newDesc });
-            }
-
-
+               
 
         }
         await JS.InvokeVoidAsync("Disq");

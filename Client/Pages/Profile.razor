@@ -76,8 +76,6 @@ else
                                         <RadzenButton style="width: 70px; padding: 0" Click=@(args => OnClickEdit(item.UniqueId)) Text="Edit" ButtonStyle="ButtonStyle.Secondary" />
                                         <RadzenButton style="width: 70px; padding: 0" Click=@(args => OnClickDelAsync(item.Id, item.Title)) Text="Del" ButtonStyle="ButtonStyle.Danger" />
 
-                                        @*<RadzenButton style="width: 70px; padding: 0" Text="Del" ButtonStyle="ButtonStyle.Danger"
-                                Click=@(args => DialogService.Confirm("Are you sure?", $"Delete {item.Title}", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" })) />*@
                                     </div>
                                 </div>
                             </div>
@@ -137,21 +135,6 @@ else
                             </tr>
                         </tbody>
                     </table>
-                    <!--<div class="mt-1">
-                    <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="5" AllowPaging="true" AllowSorting="true"
-                                    Data="@blocked" TItem="ProfileClass" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or">
-                        <Columns>-->
-                    @*<RadzenDataGridColumn TItem="ProfileClass" Property="EmployeeID" Filterable="false" Title="ID" Frozen="true" Width="50px" TextAlign="TextAlign.Center" />*@
-                    <!--<RadzenDataGridColumn TItem="ProfileClass" Title="Photo" Sortable="false" Filterable="false" Width="100px">
-                                    <Template Context="data">
-                                        <RadzenImage Path="@data.Avatara" style="width: 32px; height: 32px; border-radius: 50%;" />
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="ProfileClass" Property="Name" Title="Name" />
-
-                            </Columns>
-                        </RadzenDataGrid>
-                    </div>-->
                 }
 
             </RadzenTabsItem>

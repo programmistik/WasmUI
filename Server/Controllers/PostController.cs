@@ -1,4 +1,5 @@
-﻿using IdentityModel.Client;
+﻿using Azure.Storage.Blobs;
+using IdentityModel.Client;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -19,12 +20,6 @@ namespace WasmUI.Server.Controllers
     [Route("[controller]")]
     public class PostController : ControllerBase
     {
-        //private readonly GatewayService _gatewayClient;
-
-        //public PostController(GatewayService gatewayClient)
-        //{
-        //    _gatewayClient = gatewayClient;
-        //}
 
         // Находит все созданные пользователем посты по AppUserId
         [HttpGet]
@@ -96,6 +91,10 @@ namespace WasmUI.Server.Controllers
         [HttpDelete]
         public async Task Delete(string PostId)
         {
+            var post = await UpdateService.GetPostAsync(PostId);
+            var blobName = post.Image.Replace("https://programmistik83.blob.core.windows.net/posts/", "");
+
+            if (post != null) { 
             var client = await GatewayService.CreateClient();
 
             var link = "https://localhost:44382/gateway/deletepost/" + PostId;
@@ -103,8 +102,28 @@ namespace WasmUI.Server.Controllers
 
             var response = await client.DeleteAsync(link);
 
-            if (response.IsSuccessStatusCode)
-            {
+                if (response.IsSuccessStatusCode)
+                {
+
+                    var connectionString =
+                        Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
+                    string container = "posts";
+
+
+                    //var AzureClient = new BlobClient(connectionString, container, blobName);
+
+                    BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
+                    BlobContainerClient cont = blobServiceClient.GetBlobContainerClient(container);
+                    cont.GetBlobClient(blobName).DeleteIfExists();
+
+                    //var res = await AzureClient.Get DeleteIfExistsAsync ();
+
+                    //if (res)
+                    //{
+                    //    var ok = true;
+                    //}
+                }
+
             }
 
         }

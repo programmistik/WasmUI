@@ -105,5 +105,29 @@ namespace WasmUI.Server.Services
             }
 
         }
+
+        [HttpGet]
+        public static async Task<Post> GetPostAsync(string id)
+        {
+            // get post by id
+            var client = await GatewayService.CreateClient();
+
+
+            var link = "https://localhost:44382/gateway/post/" + id;
+
+            var response = await client.GetAsync(link);
+            if (response.IsSuccessStatusCode)
+            {
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                //var posts = JsonConvert.DeserializeObject<Post>(content); ;
+                var post = BsonSerializer.Deserialize<Post>(content);
+                return post;
+              
+            }
+            //var post = await Http.GetFromJsonAsync<Post>($"Mypost?PostId={id}");
+            return new Post();
+        }
     }
 }
