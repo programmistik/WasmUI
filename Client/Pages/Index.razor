@@ -29,7 +29,7 @@
                                 <div class="entry-header">
                                     <div class="entry-thumbnail">
 
-                                        <RadzenImage Path=@item.post.Image
+                                        <RadzenImage Path=@item.post.getMinPath()
                                                      class="img-fluid"
                                                      @onclick="() => ClickMe(item.post.UniqueId)"
                                                      Style="cursor: pointer !important;image-orientation: from-image;object-fit: cover">

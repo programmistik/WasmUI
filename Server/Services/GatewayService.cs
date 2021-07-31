@@ -1,4 +1,6 @@
 ﻿using IdentityModel.Client;
+using Microsoft.Extensions.Configuration;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,12 +13,18 @@ namespace WasmUI.Server.Services
     {
         public static async Task<HttpClient> CreateClient()
         {
+            var st = SettingsClass.AppSettings;
+
+            var ClientId = st["ClientId"];
+            var ClientSecret = st["ClientSecret"];
+            var Scope = st["Scope"];
+            var ids = st["IdentityServer"];
+
             var client = new HttpClient();
-            var disco = await client.GetDiscoveryDocumentAsync("https://localhost:5001");
+            var disco = await client.GetDiscoveryDocumentAsync(ids);
             if (disco.IsError)
             {
-                //Console.WriteLine(disco.Error);
-                //return;
+                Log.Error(disco.Error);
             }
 
             //GET TOKEN
@@ -24,14 +32,13 @@ namespace WasmUI.Server.Services
             {
                 Address = disco.TokenEndpoint,
 
-                ClientId = "client",
-                ClientSecret = "511536EF-F270-4058-80CA-1C89C192F69A",
-                Scope = "api1"
+                ClientId = ClientId,
+                ClientSecret = ClientSecret,
+                Scope = Scope
             });
             if (tokenResponse.IsError)
             {
-                //Console.WriteLine(tokenResponse.Error);
-                //return;
+                Log.Error(tokenResponse.Error);
             }
 
 

@@ -25,13 +25,9 @@ namespace WasmUI.Client.Services
             _localStorage = localStorage;
         }
 
-        //public async Task<AuthResponseDto> Login(HttpResponseMessage authResult, UserForAuthenticationDto userForAuthentication)
         public async Task<AuthResponseDto> Login(AuthResponseDto res, UserForAuthenticationDto userForAuthentication)
         {
 
-            //var authContent = await authResult.Content.ReadAsStringAsync();
-            //var res = JsonSerializer.Deserialize<AuthResponseDto>(authContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            //if (!authResult.IsSuccessStatusCode)
             if (!res.IsAuthSuccessful)
                 return res;
             await _localStorage.SetItemAsync("authToken", res.Token);

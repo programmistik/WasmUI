@@ -2,6 +2,8 @@
 
 @using WasmUI.Shared
 @using System.Text.RegularExpressions
+@using System.IO
+
 
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
@@ -24,14 +26,15 @@ else
                     <div class="col-md-10 mb-2">
 
                         <RadzenUpload @ref="_UploadControl" Multiple="false" Accept="image/*" Auto="false"
-                                      Url=@($"upload/{customParameter}") />
-                        @*<RadzenFileInput @bind-Value="newpost.Image"
+                                      Url=@($"upload/{customParameter}") Change=@(args => OnChange(args, "Changed")) />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 align-items-center d-flex">
 
-                            TValue="string" />*@
-
-
-                        @*<RadzenUpload Multiple="true" Accept="image/*" Url=@($"upload/{newpost}") Style="margin-bottom: 20px;"
-                            Progress=@(args => OnProgress(args, "Upload with additional parameter")) />*@
+                    </div>
+                    <div class="col-md-9 mb-2">
+                        <RadzenLabel style="width: 100%; color: red;" Text=@imgtext />
                     </div>
                 </div>
                 <div class="row">
@@ -42,14 +45,14 @@ else
                         <RadzenTextBox style="width: 100%;" Name="Title" @bind-Value="newpost.Title" />
                     </div>
                 </div>
-                @*<div class="row">
-                    <div class="col-md-2 align-items-center d-flex">
-                        <RadzenLabel Text="Location:" />
+                <div class="row">
+                    <div class="col-md-3 align-items-center d-flex">
                     </div>
-                    <div class="col-md-10 mb-2">
-                        <RadzenTextBox style="width: 100%;" Name="Location" @bind-Value="newpost.Location" />
+                    <div class="col-md-9 mb-2">
+                        <RadzenRequiredValidator Component="Title" Text="Title  is required" Style="width: 100%;" />
+                        <RadzenLengthValidator Component="Title" Max="30" Text="Title should be at most 30 characters" Style="width: 100%;" />
                     </div>
-                </div>*@
+                </div>
                 <div class="row">
                     <RadzenHtmlEditor @bind-Value="newpost.Description" style="height: 350px; margin-bottom: 1rem;">
 
@@ -89,6 +92,9 @@ else
     int id = 2;
     string customParameter = Guid.NewGuid().ToString();
     string me;
+    string imgtext;
+    List<string> ImageExtentions = new List<string>() { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
+    bool imgSelected = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -107,36 +113,62 @@ else
 
     async Task Submit(Post arg)
     {
-        arg.Date = DateTime.Now;
-        arg.ProfileId = me;
-        arg.LikesProfileId = new List<string>();
-        arg.ViewsProfileId = new List<string>();
-        arg.Hashtags = new List<string>();
-        arg.UniqueId = customParameter;
-
-        // look for hashtags in desc
-        if (!String.IsNullOrEmpty(arg.Description))
+        if (imgSelected)
         {
-            var regex = new Regex(@"(?<=#)\w+");
-            var matches = regex.Matches(arg.Description);
+            arg.Date = DateTime.Now;
+            arg.ProfileId = me;
+            arg.LikesProfileId = new List<string>();
+            arg.ViewsProfileId = new List<string>();
+            arg.Hashtags = new List<string>();
+            arg.UniqueId = customParameter;
 
-            foreach (Match m in matches)
+            // look for hashtags in desc
+            if (!String.IsNullOrEmpty(arg.Description))
             {
-                arg.Hashtags.Add(m.Value);
+                var regex = new Regex(@"(?<=#)\w+");
+                var matches = regex.Matches(arg.Description);
+
+                foreach (Match m in matches)
+                {
+                    arg.Hashtags.Add(m.Value);
+                }
             }
+
+            await Http.PostAsJsonAsync<Post>("Post", arg);
+
+            var f = _UploadControl.Upload();
+
+            NavigationManager.NavigateTo($"/postadded/{customParameter}");
         }
-
-        await Http.PostAsJsonAsync<Post>("Post", arg);
-
-        var f = _UploadControl.Upload();
-
-        NavigationManager.NavigateTo($"/postadded/{customParameter}");
-
+        else
+            imgtext = "Image is required. Enter valid image (.jpg, .jpeg, .png, .bmp, .gif)";
     }
 
     void Cancel()
     {
         NavigationManager.NavigateTo("/");
+    }
+
+    void OnChange(UploadChangeEventArgs args, string name)
+    {
+        if (args.Files.Count() > 0)
+        {
+            var fileName = args.Files.First().Name;
+            var ext = Path.GetExtension(fileName);
+            if (ImageExtentions.Contains(ext))
+            {
+                imgSelected = true;
+                imgtext = "";
+            }
+            else
+            {
+                imgtext = "Enter valid image (.jpg, .jpeg, .png, .bmp, .gif)";
+                imgSelected = false;
+            }
+        }
+        else
+            imgSelected = false;
+
     }
 
 

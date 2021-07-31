@@ -27,11 +27,13 @@ namespace WasmUI.Server.Controllers
         {
             var client = await GatewayService.CreateClient();
 
+            var gw = SettingsClass.GatewayLink;
+
             string link;
             if(AppUserId == null)
-                link = "https://localhost:44382/gateway/getposts";
+                link = gw + "getposts";
             else
-                link = "https://localhost:44382/gateway/getposts/" + AppUserId;
+                link = gw + "getposts/" + AppUserId;
 
             var response = await client.GetAsync(link);
             if (response.IsSuccessStatusCode)
@@ -52,7 +54,7 @@ namespace WasmUI.Server.Controllers
 
             var client = await GatewayService.CreateClient();
 
-            var link = "https://localhost:44382/gateway/editpost";
+            var link = SettingsClass.GatewayLink + "editpost";
 
             var js = JsonConvert.SerializeObject(post);
             HttpContent content = new StringContent(js, Encoding.UTF8, "application/json");
@@ -72,7 +74,7 @@ namespace WasmUI.Server.Controllers
 
             var client = await GatewayService.CreateClient(); 
 
-            var link = "https://localhost:44382/gateway/addpost";
+            var link = SettingsClass.GatewayLink + "addpost";
 
             var js = JsonConvert.SerializeObject(post);
             HttpContent content = new StringContent(js, Encoding.UTF8, "application/json");
@@ -97,7 +99,7 @@ namespace WasmUI.Server.Controllers
             if (post != null) { 
             var client = await GatewayService.CreateClient();
 
-            var link = "https://localhost:44382/gateway/deletepost/" + PostId;
+            var link = SettingsClass.GatewayLink + "deletepost/" + PostId;
 
 
             var response = await client.DeleteAsync(link);
@@ -110,18 +112,10 @@ namespace WasmUI.Server.Controllers
                     string container = "posts";
 
 
-                    //var AzureClient = new BlobClient(connectionString, container, blobName);
-
                     BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
                     BlobContainerClient cont = blobServiceClient.GetBlobContainerClient(container);
                     cont.GetBlobClient(blobName).DeleteIfExists();
 
-                    //var res = await AzureClient.Get DeleteIfExistsAsync ();
-
-                    //if (res)
-                    //{
-                    //    var ok = true;
-                    //}
                 }
 
             }

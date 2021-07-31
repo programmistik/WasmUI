@@ -36,14 +36,15 @@ namespace WasmUI.Shared
         {
             if (Image == null)
                 return @"https://i.stack.imgur.com/y9DpT.jpg";
-            return @$"/uploads/{Image}";
+            return Image;
         }
         public string getMinPath()
         {
             if (Image == null)
                 return @"https://i.stack.imgur.com/y9DpT.jpg";
+            string newstr = Image.Replace("posts", "resizedposts");
 
-            return @$"/uploads/min.{Image}";
+            return newstr;
         }
     }
 

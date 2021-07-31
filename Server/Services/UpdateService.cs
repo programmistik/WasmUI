@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson.Serialization;
 using Newtonsoft.Json;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +23,7 @@ namespace WasmUI.Server.Services
             var client = await GatewayService.CreateClient();
 
 
-            var link = "https://localhost:44382/gateway/postunique/" + id;
+            var link = SettingsClass.GatewayLink + "postunique/" + id;
 
             var response = await client.GetAsync(link);
             if (response.IsSuccessStatusCode)
@@ -30,14 +31,13 @@ namespace WasmUI.Server.Services
 
                 var content = await response.Content.ReadAsStringAsync();
 
-                //var posts = JsonConvert.DeserializeObject<Post>(content); ;
                 var post = BsonSerializer.Deserialize<Post>(content);
-                //return post;
                 post.Image = uri;
                 
                 await PutPostAsync(post);
             }
-            //var post = await Http.GetFromJsonAsync<Post>($"Mypost?PostId={id}");
+            else
+                Log.Error(response.RequestMessage.ToString());
             ;
         }
 
@@ -47,7 +47,7 @@ namespace WasmUI.Server.Services
 
             var client = await GatewayService.CreateClient();
 
-            var link = "https://localhost:44382/gateway/editpost";
+            var link = SettingsClass.GatewayLink + "editpost";
 
             var js = JsonConvert.SerializeObject(post);
             HttpContent content = new StringContent(js, Encoding.UTF8, "application/json");
@@ -67,22 +67,19 @@ namespace WasmUI.Server.Services
             // get profile by id
             var client = await GatewayService.CreateClient();
 
-            var link = "https://localhost:44382/gateway/Profile/" + AppUserId;
+            var link = SettingsClass.GatewayLink + "Profile/" + AppUserId;
             var response = await client.GetAsync(link);
 
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
 
-                //var prof = BsonSerializer.Deserialize<ProfileClass>(content); ;
                 var prof = JsonConvert.DeserializeObject<ProfileClass>(content);
 
-                //return post;
                 prof.Avatara = uri;
 
                 await PutProfileAsync(prof);
             }
-            //var post = await Http.GetFromJsonAsync<Post>($"Mypost?PostId={id}");
             ;
         }
 
@@ -92,7 +89,7 @@ namespace WasmUI.Server.Services
 
             var client = await GatewayService.CreateClient();
 
-            var link = "https://localhost:44382/gateway/Profile/" + profile.AppUserId;
+            var link = SettingsClass.GatewayLink + "Profile/" + profile.AppUserId;
 
             var js = JsonConvert.SerializeObject(profile);
             HttpContent content = new StringContent(js, Encoding.UTF8, "application/json");
@@ -113,7 +110,7 @@ namespace WasmUI.Server.Services
             var client = await GatewayService.CreateClient();
 
 
-            var link = "https://localhost:44382/gateway/post/" + id;
+            var link = SettingsClass.GatewayLink + "post/" + id;
 
             var response = await client.GetAsync(link);
             if (response.IsSuccessStatusCode)
@@ -121,12 +118,10 @@ namespace WasmUI.Server.Services
 
                 var content = await response.Content.ReadAsStringAsync();
 
-                //var posts = JsonConvert.DeserializeObject<Post>(content); ;
                 var post = BsonSerializer.Deserialize<Post>(content);
                 return post;
               
             }
-            //var post = await Http.GetFromJsonAsync<Post>($"Mypost?PostId={id}");
             return new Post();
         }
     }

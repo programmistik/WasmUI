@@ -6,6 +6,7 @@
 
 
 @using WasmUI.Shared
+@using System.IO
 
 
 @if (prof == null)
@@ -23,20 +24,35 @@ else
                     </div>
                     <div class="col-md-2 mb-2">
                         <RadzenUpload @ref="upload" @bind-Value="prof.Avatara" Multiple="false" Accept="image/*" Auto="false"
-                                      Url=@($"uploadava/{me}") 
+                                      Url=@($"uploadava/{me}")
                                       Change=@(args => OnChange(args, "Changed")) />
-                       
 
-                        @*<RadzenUpload Multiple="true" Accept="image/*" Url=@($"upload/{newpost}") Style="margin-bottom: 20px;"
-        Progress=@(args => OnProgress(args, "Upload with additional parameter")) />*@
+                    </div>
+
+                </div>
+                <div class="row">
+                    <div class="col-md-3 align-items-center d-flex">
+
+                    </div>
+                    <div class="col-md-9 mb-2">
+                        <RadzenLabel style="width: 100%; color: red;" Text=@imgtext />
                     </div>
                 </div>
+
                 <div class="row">
                     <div class="col-md-3 align-items-center d-flex">
                         <RadzenLabel Text="Name:" />
                     </div>
                     <div class="col-md-9 mb-2">
                         <RadzenTextBox style="width: 100%;" Name="Name" @bind-Value="prof.Name" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 align-items-center d-flex">
+                    </div>
+                    <div class="col-md-9 mb-2">
+                        <RadzenLengthValidator Component="Name" Min="4" Text="Name should be at least 4 characters" Style="width: 100%;" />
+                        <RadzenLengthValidator Component="Name" Max="15" Text="Name should be at most 15 characters" Style="width: 100%;" />
                     </div>
                 </div>
                 <div class="row">
@@ -49,11 +65,18 @@ else
                 </div>
                 <div class="row">
                     <div class="col-md-3 align-items-center d-flex">
+                    </div>
+                    <div class="col-md-9 mb-2">
+                        <RadzenLengthValidator Component="From" Min="4" Text="From should be at least 4 characters" Style="width: 100%;" />
+                        <RadzenLengthValidator Component="From" Max="15" Text="From should be at most 15 characters" Style="width: 100%;" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 align-items-center d-flex">
                         <RadzenLabel Text="Whatsapp:" />
                     </div>
                     <div class="col-md-9 mb-2">
                         <RadzenMask Mask="(***) ***-**-**" Pattern="[^0-9]" Placeholder="(000) 000-00-00" Name="Whatsapp" @bind-Value="prof.Whatsapp" style="width: 100%;" />
-                        @*<RadzenTextBox style="width: 100%;" Name="Location" @bind-Value="prof.Whatsapp" />*@
                     </div>
                 </div>
                 <div class="row">
@@ -62,6 +85,14 @@ else
                     </div>
                     <div class="col-md-9 mb-2">
                         <RadzenTextBox style="width: 100%;" Name="Skype" @bind-Value="prof.Skype" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 align-items-center d-flex">
+                    </div>
+                    <div class="col-md-9 mb-2">
+                        <RadzenLengthValidator Component="Skype" Min="4" Text="Skype should be at least 4 characters" Style="width: 100%;" />
+                        <RadzenLengthValidator Component="Skype" Max="15" Text="Skype should be at most 15 characters" Style="width: 100%;" />
                     </div>
                 </div>
 
@@ -82,11 +113,16 @@ else
 
 @code {
 
-    ProfileClass prof;
+        ProfileClass prof;
 
-    RadzenUpload upload;
-    string me;
-    bool AvaChenged = false;
+        RadzenUpload upload;
+        string me;
+        bool AvaChenged = false;
+        string imgtext;
+
+        List<string> ImageExtentions = new List<string>() { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
+
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -97,9 +133,28 @@ else
 
     }
 
+
+
     void OnChange(UploadChangeEventArgs args, string name)
     {
-        AvaChenged = true;
+        if (args.Files.Count() > 0)
+        {
+            var fileName = args.Files.First().Name;
+            var ext = Path.GetExtension(fileName);
+            if (ImageExtentions.Contains(ext))
+            {
+                AvaChenged = true;
+                imgtext = "";
+            }
+            else
+            {
+                imgtext = "Enter valid image (.jpg, .jpeg, .png, .bmp, .gif)";
+                AvaChenged = false;
+            }
+        }
+        else
+            AvaChenged = false;
+
     }
 
     async Task Submit(ProfileClass arg)

@@ -2,19 +2,43 @@
 
 @inject NavigationManager NavigationManager
 
+@if (loaded)
+{
+    <h3>Uploaded</h3>
+    <RadzenProgressBar Value="100" Max="100" Style="margin-bottom: 20px" />
+    <RadzenButton Click=@(args => OnClickView(UniqueId)) Text="View my new post" ButtonStyle="ButtonStyle.Secondary" />
+}
+else
+{
+<h3>Loading...</h3>
 
-<h3>Uploaded</h3>
+<div class="row">
+    <div class="col-xl-6">
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="margin-bottom: 20px" />
 
-<RadzenButton Click=@(args => OnClickView(UniqueId)) Text="View my new post" ButtonStyle="ButtonStyle.Secondary" />
+    </div>
+</div>
+}
+
 
 @code {
 
     [Parameter]
     public string UniqueId { get; set; }
 
+    
+    bool loaded = false;
+
     void OnClickView(string id)
     {
         NavigationManager.NavigateTo($"/singlepost/{id}");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(6000);
+           
+        loaded = true;
     }
 
 }

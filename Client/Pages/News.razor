@@ -1,6 +1,7 @@
 ﻿@page "/news"
 
-
+@using Blazored.LocalStorage
+@inject ILocalStorageService storage
 
 <h3>News</h3>
 <hr />
@@ -41,20 +42,24 @@
         NavigationManager.NavigateTo($"/singlepost/{id}");
     }
 
-    void OnChange(bool? value, string name)
+    async Task OnChange(bool? value, string name)
     {
         if (checkBox1Value)
         {
+            await storage.SetItemAsync("friendsOnly", true);
             posts = posts.Where(x => myProfile.Friends.Any(f => f.Equals(x.ProfileId))).ToList();
         }
         else
         {
+            await storage.SetItemAsync("friendsOnly", false);
             posts = allposts;
         }
     }
 
     protected override async Task OnInitializedAsync()
     {
+        checkBox1Value = await storage.GetItemAsync<bool>("friendsOnly");
+
         var authstate = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
         me = authstate.User.Identity.Name;
 
@@ -68,6 +73,11 @@
         allposts = allposts.OrderByDescending(x => x.Date).ToList();
 
         posts = new List<Post>(allposts);
+
+        if (checkBox1Value)
+        {
+            posts = posts.Where(x => myProfile.Friends.Any(f => f.Equals(x.ProfileId))).ToList();
+        }
 
     }
 

@@ -2,6 +2,7 @@
 using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -52,6 +53,7 @@ namespace WasmUI.Server.Controllers
             }
             catch (Exception ex)
             {
+                Log.Error(ex.Message);
                 return "";
             }
         }

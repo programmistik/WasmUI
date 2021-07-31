@@ -20,7 +20,7 @@ namespace WasmUI.Server.Controllers
         {
 
             var client = await GatewayService.CreateClient();
-            var link = "https://localhost:44382/gateway/searchpostByTag/" + searchStr;
+            var link = SettingsClass.GatewayLink + "searchpostByTag/" + searchStr;
 
                 var response = await client.GetAsync(link);
                 if (response.IsSuccessStatusCode)

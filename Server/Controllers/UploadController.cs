@@ -18,6 +18,9 @@ using IdentityModel.Client;
 using MongoDB.Bson.Serialization;
 using Newtonsoft.Json;
 using WasmUI.Server.Services;
+using System.Text.RegularExpressions;
+using ImageMagick;
+using Serilog;
 
 namespace WasmUI.Server.Controllers
 {
@@ -55,6 +58,28 @@ namespace WasmUI.Server.Controllers
 
                     await UpdateService.UpdatePostAsync(id, ur);
 
+                    // resize
+                    using (MagickImage image = new MagickImage(ur))
+                    {
+                        // MagickGeometry size = new MagickGeometry(100, 100);
+                        // This will resize the image to a fixed size without maintaining the aspect ratio.
+                        // Normally an image will be resized to fit inside the specified size.
+                        var size = new Percentage(50);
+
+                        image.Resize(size);
+
+                        // Save the result
+                        using (var output = new MemoryStream())
+                        {
+                            await image.WriteAsync(output);
+                            output.Position = 0;
+                            string container2 = "resizedposts";
+                            var client2 = new BlobClient(connectionString, container2, blobName);
+                            var res2 = await client2.UploadAsync(output, options, cancellationToken: default);
+                        }
+                    }
+
+
                     return ur;
 
                 }
@@ -63,9 +88,11 @@ namespace WasmUI.Server.Controllers
             }
             catch (Exception ex)
             {
+                Log.Error(ex.Message);
                 return "";
             }
         }
+
     }
 
     

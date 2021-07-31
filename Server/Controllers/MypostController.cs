@@ -24,7 +24,7 @@ namespace WasmUI.Server.Controllers
             var client = await GatewayService.CreateClient();
 
 
-            var  link = "https://localhost:44382/gateway/postunique/" + PostId;
+            var  link = SettingsClass.GatewayLink + "postunique/" + PostId;
 
             var response = await client.GetAsync(link);
             if (response.IsSuccessStatusCode)
@@ -32,7 +32,6 @@ namespace WasmUI.Server.Controllers
 
                 var content = await response.Content.ReadAsStringAsync();
 
-                //var posts = JsonConvert.DeserializeObject<Post>(content); ;
                 var post = BsonSerializer.Deserialize<Post>(content);
                 return post;
             }

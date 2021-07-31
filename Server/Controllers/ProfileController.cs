@@ -25,7 +25,7 @@ namespace WasmUI.Server.Controllers
         {
             var client = await GatewayService.CreateClient();
 
-            var link = "https://localhost:44382/gateway/Profile/" + AppUserId;
+            var link = SettingsClass.GatewayLink + "Profile/" + AppUserId;
             var response = await client.GetAsync(link);
 
             if (response.IsSuccessStatusCode)
@@ -47,7 +47,7 @@ namespace WasmUI.Server.Controllers
 
             var client = await GatewayService.CreateClient();
 
-            var link = "https://localhost:44382/gateway/Profile/" + AppUserId;
+            var link = SettingsClass.GatewayLink + "Profile/" + AppUserId;
 
             var js = JsonConvert.SerializeObject(prof);
             HttpContent content = new StringContent(js, Encoding.UTF8, "application/json");
