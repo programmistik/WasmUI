@@ -70,12 +70,11 @@ else
         {
             <div class="col-12 col-md-3">
                 <div class="card">
-                    <RadzenImage Path=@item.Image
+                    <RadzenImage Path=@item.getMinPath()
                                  class="card-img-top entry-title"
                                  @onclick="() => ClickMe(item.UniqueId)"
                                  Style="cursor: pointer;image-orientation: from-image;object-fit: cover; height:250px">
                     </RadzenImage>
-                    @*<img src="uploads/posts/@item.Image" class="card-img-top entry-title" alt="Title" style=" image-orientation:from-image; object-fit: cover" height="250">*@
 
                     <div class="card-body">
 

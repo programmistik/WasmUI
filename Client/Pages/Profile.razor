@@ -60,7 +60,7 @@ else
                     {
                         <div class="col-12 col-md-3 mb-2">
                             <div class="card">
-                                <RadzenImage Path=@item.Image
+                                <RadzenImage Path=@item.getMinPath()
                                              class="card-img-top entry-title"
                                              @onclick="() => ClickMe(item.UniqueId)"
                                              Style="cursor: pointer;image-orientation: from-image;object-fit: cover; height:250px">
@@ -151,7 +151,7 @@ else
                         {
                             <div class="col-12 col-md-3 mb-2">
                                 <div class="card">
-                                    <RadzenImage Path=@item.Post.Image
+                                    <RadzenImage Path=@item.Post.getMinPath()
                                                  class="card-img-top entry-title"
                                                  @onclick="() => ClickMe(item.Post.UniqueId)"
                                                  Style="cursor: pointer;image-orientation: from-image;object-fit: cover; height:250px">
