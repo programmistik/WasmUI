@@ -19,11 +19,11 @@ namespace WasmUI.Server.Controllers
         [HttpPost]
         public async Task<AuthResponseDto> Post(UserForAuthenticationDto userForAuthentication)
         {
-            var ChangePassLink = SettingsClass.AppSettings["ChangePass"];
+            var LoginLink = SettingsClass.AppSettings["Login"];
             var _client = new HttpClient();
             var content = JsonSerializer.Serialize(userForAuthentication);
             var bodyContent = new StringContent(content, Encoding.UTF8, "application/json");
-            HttpResponseMessage authResult = await _client.PostAsync(ChangePassLink, bodyContent);
+            HttpResponseMessage authResult = await _client.PostAsync(LoginLink, bodyContent);
 
             if (authResult.IsSuccessStatusCode)
             {               
