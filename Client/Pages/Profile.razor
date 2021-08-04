@@ -58,8 +58,8 @@ else
                 <div class="row">
                     @foreach (var item in posts)
                     {
-                        <div class="col-12 col-md-3 mb-2">
-                            <div class="card">
+                        <div class="col-sm-12 col-md-10 col-lg-6 col-xl-4 mb-2">
+                            <div class="card" style="height: 25em; ">
                                 <RadzenImage Path=@item.getMinPath()
                                              class="card-img-top entry-title"
                                              @onclick="() => ClickMe(item.UniqueId)"
@@ -139,7 +139,7 @@ else
 
             </RadzenTabsItem>
 
-            <RadzenTabsItem Text="❤ Licked posts">
+            <RadzenTabsItem Text="❤ Liked posts">
                 @if (liked == null)
                 {
                     <p><em>Loading...</em></p>
@@ -325,6 +325,8 @@ else
 
         prof = await Http.GetFromJsonAsync<ProfileClass>($"Profile?AppUserId={me}");
         posts = await Http.GetFromJsonAsync<List<Post>>($"Post?AppUserId={me}");
+
+        posts = posts.OrderByDescending(x => x.Date).ToList();
 
         if (prof.Avatara == null)
             Avatara = $"uploads/profiles/default.jpg";

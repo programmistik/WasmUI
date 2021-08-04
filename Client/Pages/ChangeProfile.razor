@@ -53,6 +53,7 @@ else
                     <div class="col-md-9 mb-2">
                         <RadzenLengthValidator Component="Name" Min="4" Text="Name should be at least 4 characters" Style="width: 100%;" />
                         <RadzenLengthValidator Component="Name" Max="15" Text="Name should be at most 15 characters" Style="width: 100%;" />
+                        <RadzenLabel style="width: 100%; color: red;" Text=@titletext />
                     </div>
                 </div>
                 <div class="row">
@@ -67,7 +68,7 @@ else
                     <div class="col-md-3 align-items-center d-flex">
                     </div>
                     <div class="col-md-9 mb-2">
-                        <RadzenLengthValidator Component="From" Min="4" Text="From should be at least 4 characters" Style="width: 100%;" />
+                        @*<RadzenLengthValidator Component="From" Min="4" Text="From should be at least 4 characters" Style="width: 100%;" />*@
                         <RadzenLengthValidator Component="From" Max="15" Text="From should be at most 15 characters" Style="width: 100%;" />
                     </div>
                 </div>
@@ -91,7 +92,7 @@ else
                     <div class="col-md-3 align-items-center d-flex">
                     </div>
                     <div class="col-md-9 mb-2">
-                        <RadzenLengthValidator Component="Skype" Min="4" Text="Skype should be at least 4 characters" Style="width: 100%;" />
+                        @*<RadzenLengthValidator Component="Skype" Min="4" Text="Skype should be at least 4 characters" Style="width: 100%;" />*@
                         <RadzenLengthValidator Component="Skype" Max="15" Text="Skype should be at most 15 characters" Style="width: 100%;" />
                     </div>
                 </div>
@@ -113,15 +114,15 @@ else
 
 @code {
 
-        ProfileClass prof;
+    ProfileClass prof;
 
-        RadzenUpload upload;
-        string me;
-        bool AvaChenged = false;
-        string imgtext;
+    RadzenUpload upload;
+    string me;
+    bool AvaChenged = false;
+    string imgtext;
 
-        List<string> ImageExtentions = new List<string>() { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
-
+    List<string> ImageExtentions = new List<string>() { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
+    string titletext = "";
 
 
     protected override async Task OnInitializedAsync()
@@ -159,10 +160,22 @@ else
 
     async Task Submit(ProfileClass arg)
     {
+        string nname = arg.Name.Trim();
+
+        if (string.IsNullOrEmpty(nname))
+        {
+            titletext = "Name cannot be empty";
+            return;
+        }
+
         if (AvaChenged)
         {
             var f = upload.Upload();
         }
+
+        prof.Name = nname;
+        prof.From = prof.From.Trim();
+        prof.Skype = prof.Skype.Trim();
 
         await Http.PutAsJsonAsync<ProfileClass>("Profile", prof);
 

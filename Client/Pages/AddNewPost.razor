@@ -3,6 +3,7 @@
 @using WasmUI.Shared
 @using System.Text.RegularExpressions
 @using System.IO
+@using System
 
 
 @inject NavigationManager NavigationManager
@@ -42,7 +43,7 @@ else
                         <RadzenLabel Text="Title:" />
                     </div>
                     <div class="col-md-10 mb-2">
-                        <RadzenTextBox style="width: 100%;" Name="Title" @bind-Value="newpost.Title" />
+                        <RadzenTextBox style="width: 100%;" Name="Title" @bind-Value="newpost.Title"  @oninput=@(args => OnChange(args.Value.ToString())) />
                     </div>
                 </div>
                 <div class="row">
@@ -51,6 +52,7 @@ else
                     <div class="col-md-9 mb-2">
                         <RadzenRequiredValidator Component="Title" Text="Title  is required" Style="width: 100%;" />
                         <RadzenLengthValidator Component="Title" Max="30" Text="Title should be at most 30 characters" Style="width: 100%;" />
+                        <RadzenLabel style="width: 100%; color: red;" Text=@titletext />
                     </div>
                 </div>
                 <div class="row">
@@ -93,6 +95,7 @@ else
     string customParameter = Guid.NewGuid().ToString();
     string me;
     string imgtext;
+    string titletext;
     List<string> ImageExtentions = new List<string>() { ".jpg", ".jpeg", ".png", ".bmp", ".gif" };
     bool imgSelected = false;
 
@@ -113,6 +116,13 @@ else
 
     async Task Submit(Post arg)
     {
+        string title = arg.Title.Trim();
+
+        if (string.IsNullOrEmpty(title))
+        {
+            titletext = "Title cannot be empty";
+            return;
+        }
         if (imgSelected)
         {
             arg.Date = DateTime.Now;
@@ -121,9 +131,10 @@ else
             arg.ViewsProfileId = new List<string>();
             arg.Hashtags = new List<string>();
             arg.UniqueId = customParameter;
+            arg.Title = title;
 
             // look for hashtags in desc
-            if (!String.IsNullOrEmpty(arg.Description))
+                if (!String.IsNullOrEmpty(arg.Description))
             {
                 var regex = new Regex(@"(?<=#)\w+");
                 var matches = regex.Matches(arg.Description);
@@ -171,7 +182,14 @@ else
 
     }
 
+    void OnChange(string value)
+    {
+        if (!String.IsNullOrEmpty(value))
+        {
+            titletext = "";
 
+        }
+    }
 
 }
 
